@@ -3,8 +3,10 @@ Movie recommendation system
 
 Hello, 
 
-I could´n upload all files in github.
+I couldn't upload all files in github, here you are all data sets:
 
-Please use my code and here you can find all the files: https://drive.google.com/drive/folders/1QP2RatOJmho6f88tbIdATvNf4TeOsqCX?usp=sharing
+Use my code and here you can find all the data sets: https://drive.google.com/drive/folders/1QP2RatOJmho6f88tbIdATvNf4TeOsqCX?usp=sharing
+
+Best regards,
 
 Thanks!
