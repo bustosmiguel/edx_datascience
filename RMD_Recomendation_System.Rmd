@@ -1,0 +1,196 @@
+---
+title: "Rmd code"
+author: "Miguel Angel Bustos"
+date: "12/21/2020"
+output: 
+  pdf_document: 
+    fig_height: 5
+    fig_width: 5
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+library(knitr)
+library(dplyr)
+library(lubridate)
+library(scales)
+library(stringr)
+library(ggplot2)
+
+
+#Introduction
+
+#This inform it´s a recommendation system, based in Random Forest1 for categorical data and RMSE2 for numerical data, using Edx dataset joined it with Imdb ratings it gives important information to get a better forecast approximation. The steps of the project are:
+  
+#1.- R Libraries
+
+#Tidyverse
+#Magrittr
+#Lubridate
+#randomForest
+#caret
+#readr
+#ggplot2
+
+#2.	Methods and analysis
+#3.	Datasets structures
+#4.	Data model
+#5.	Model results
+
+#Random forest accuracy (For categorical variable)
+#RMSE forecast accuracy (For numerical variable)
+
+#6.	Visualization
+#7.	Conclusion
+
+#1https://en.wikipedia.org/wiki/Root_mean_square
+#2https://en.wikipedia.org/wiki/Random_forest
+
+#2	Methods and analysis
+
+#Data cleaning
+
+#The data cleaning process was dividing the Edx dataset in movies.csv and ratings.csv and doing an inner_joing with imdb dataset, that provided more information to the model; votes numbers, imdb average and Id user. Edx dataset had a separate I symbol and it had all genres in just one column, so the separate I symbol was removed using the separate function, and str_c function ordered each genre in each column:
+```
+ratings = read.csv("ratings.csv",sep = ",",header = T,stringsAsFactors = F)
+
+```{r setup, include=FALSE}
+#3	Datasets structures
+
+#It is edx dataset, where genres variable was separated by this I symbol
+
+#And now this is our data, an iner_joint combination between Edx with Imdb datasets, the recommendation systems are based on this data
+
+#It is vital to have the most information as possible in genres, having well ordered in different columns, for that objective, this data is a combination between Edx and Imdb datasets, to obtain a major accuracy in the predictions.
+
+#4	Data model
+
+#The data, was saved as data.rda, taken the major and equal 4 índice or number rating. The training_u is a length of 50% and testing_u vectors with the 50% of users. Training it´s a filter of the id_users of training_u, selecting the variables, and adding it a generos column, here it is the code.
+
+#The data has been divided in two objects; trainung_u and testing_u:
+```
+save(muestra_2, file="muestra_2.rda")
+
+```{r setup, include=FALSE}
+#5	Model results
+
+#I choose two algorithms approximation; Random Forest for categorical data, and RMSE for numerical data.
+
+#5.1	Random forest for categorical data
+
+#Genero ~ Indice + Ano + Marca_Temporal + Promedio_Idbm + Numero_Votos
+```
+set.seed(0)
+modelo = randomForest(Genero ~., data = training, ntree=30, method="class", norm.votes=FALSE, do.trace=10, proximity = FALSE, importance=TRUE)
+
+muestra_2 = list(testing_u, modelo)
+save(muestra_2, file="muestra_2.rda")
+
+```{r setup, include=FALSE}
+#Errors have different class.errors fluctuations: 0.70 for action, 0.73 for adventure, 0.80 for animation, etc.
+
+#Unique() function shows the id_users, the 1990 user has been chosen here:
+
+
+#5.2	 RMSE for numerical data
+```
+unique(testing$Id_usuario)
+testing_1900 = testing %>% filter(Id_usuario == 1900) %>% select(Indice,Ano,Genero,Marca_temporal,Promedio_Idbm,Numero_Votos) %>% mutate(Generos = factor(Genero))
+testing_1900$Genero = fct_expand(testing_1900$Genero,levels(factor(testing$Genero))[2:20])
+
+```{r setup, include=FALSE}
+# More levels added to analize the error
+```
+set.seed(100)
+prediccion_1900 = predict(modelo, newdata = testing_1900, type = "class")
+
+```{r setup, include=FALSE}
+# type class so it doesn´t affect the number of levels less
+```
+confusionMatrix(prediccion_1900, testing_1900$Generos)
+
+cm = table(prediccion_1900,testing_1900$Generos)
+i = 
+  j = 1:dim(cm)[2]
+
+se = 0;
+for (i in 1:dim(cm)[1])
+{
+  for (j in 1:dim(cm)[2])
+  {
+    se = se + cm[i,j] * (i-j)^2;
+  }
+}
+
+mse = se / sum(sum(cm))
+(rmse = sqrt(mse))
+
+```{r setup, include=FALSE}
+# > 28.97% accuracy
+```
+generos_sugerir = names(sort(table(prediccion_1900),decreasing = T)[1:3])
+
+```{r setup, include=FALSE}
+#To the user number 1900 the recomentations are Drama, Adventure and Comedy
+```
+testing_1900 %>% 
+  filter(Generos %in% generos_sugerir) %>% 
+  group_by(Generos) %>% 
+  summarise(idbm = mean(Promedio_Idbm)) %>% 
+  arrange(desc(idbm))
+
+
+```{r setup, include=FALSE}
+#6	Visualization
+
+#In this histogram we have the average ratings from 2000 to 2019 of data dataset:
+```
+Promedio_anio = data %>% group_by(Ano) %>% summarise(Raiting = mean(Indice,na.rm=T))
+Promedio_anio = Promedio_anio %>% filter(Ano %in% 2000:2019) %>% rename(Year = Ano) %>% mutate(Year = as.factor(Year))
+color = colorRampPalette(c("red","yellow","blue"))(20)
+ggplot(data = Promedio_anio) +
+  geom_bar(mapping = aes(x = Year, y = Raiting, color = Year,fill = Year , group = 1), stat = "identity") + 
+  theme_bw() + scale_color_manual(values = color) + scale_fill_manual(values = color) +
+  labs(x="Year",title ="Average Raiting by Year")
+muestra = data %>% filter(Ano %in% 2015:2019 & Genero != "(no genres listed)") %>% sample_n(1000) %>% mutate(Year = as.factor(Ano)) 
+
+
+```{r setup, include=FALSE}
+#Ratings at moving, are also knowing as content rating, it rates the suitability on TV broadcasts, movies, internet, music, comics books or video games to its audience
+
+#17 genres rated 1 to 5 (From 2015 to 2019):
+```
+ggplot(data = muestra, aes(x = Genero, y = Indice)) +
+  geom_boxplot(outlier.shape = NA, aes(fill = Year))+
+  geom_point(position = "jitter", aes(color = Genero))+
+  theme_bw() +
+  labs(x="Genres",title ="Boxplot of Genres ~ Ratings by last 5 Years")
+
+```{r setup, include=FALSE}
+#Here are some genres, in the years 2015 to 2019. Action, comedy and drama rocks! Horror is very fluctuated, mystery is highly rated, romance is very scattered:
+```
+muestra = data %>% filter(Ano %in% 2015:2019 & Genero != "(no genres listed)" & Genero %in% c("Action","Comedy","Drama","Mystery","Romance","Horror")) %>% mutate(Year = as.factor(Ano),Raiting = Indice) %>% sample_n(1500)
+ggplot(data = muestra, aes(x = Genero, y = Raiting, fill = Genero)) +
+  geom_boxplot(outlier.shape = NA)+ geom_point(position = "jitter", aes(color = Year))+
+  theme_bw() +
+  labs(x="Genres",title ="Boxplot of Ratings by Genres in the last 5 Years")
+
+
+```{r setup, include=FALSE}
+#Conclusion
+
+#The main process in this project is the movies.csv, many movies were repeated, and the process was fixing this database without movies repeated, obtained 62.423 observations and three variables. In the column genres it continuous with more than one genre, but in the code, this | character was removed. Also, this project has an IMDB ratings data set 1.076.066 observations and three variables; ID, average rating and number of votes. Both datasets were mutate in the code.
+
+#The courses helped me to have tools to sort the data, unite and based on this establish the RMSE and the Random Forrest to obtain effective predictions, and for this, I decided to establish these two algorithms, both categorical and numerical, thus having a more global clarity about of the data, with this, the histograms and boxplots presented in a more clear and efficient visualization.
+
+#The edx team, always where very efficient in all responses, Rafael Irizarry classes where very nutritive in any knowledge and great tips to use the R function in different examples. I conclude this course was very hard, it takes me a lot of hours to understand some examples, I spent almost two years to finish this whole program, and I will continuous studying statistics and R languaje. 
+
+#I am very grateful for this enriching course and helpful team.
+#Thanks!
+
+
+
+
+```
